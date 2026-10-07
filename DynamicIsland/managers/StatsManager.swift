@@ -486,6 +486,10 @@ class StatsManager: ObservableObject {
         let initialDiskStats = getDiskStats()
         previousDiskStats = initialDiskStats
 
+        Defaults.publisher(.enableStatsFeature, options: []).sink { [weak self] change in
+            if !change.newValue { self?.stopMonitoring() }
+        }.store(in: &cancellables)
+
         Defaults.publisher(.statsUpdateInterval, options: []).sink { [weak self] change in
             self?.handleUpdateIntervalChange(change.newValue)
         }.store(in: &cancellables)
@@ -525,7 +529,7 @@ class StatsManager: ObservableObject {
         delayedStopTimer?.invalidate()
         
         // Determine if we should be monitoring
-        shouldMonitorForStats = notchIsOpen && (currentView == "stats")
+        shouldMonitorForStats = Defaults[.enableStatsFeature] && notchIsOpen && (currentView == "stats")
         
         if shouldMonitorForStats {
             // Start monitoring after 3.5 seconds (when notch is open and stats tab is active)
@@ -549,7 +553,7 @@ class StatsManager: ObservableObject {
     
     // MARK: - Public Monitoring Controls
     func startMonitoring() {
-        guard !isMonitoring else { return }
+        guard Defaults[.enableStatsFeature], shouldMonitorForStats, !isMonitoring else { return }
         
         print("StatsManager: Starting monitoring...")
         
@@ -577,8 +581,6 @@ class StatsManager: ObservableObject {
     }
     
     func stopMonitoring() {
-        guard isMonitoring else { return }
-        
         // Clean up all timers
         monitoringTimer?.invalidate()
         monitoringTimer = nil
@@ -664,6 +666,7 @@ class StatsManager: ObservableObject {
     // MARK: - Private Methods
     @MainActor
     private func updateSystemStats() {
+        guard isMonitoring, Defaults[.enableStatsFeature] else { return }
         let cpuMetrics = getCPULoadBreakdown()
         let newCpuUsage = cpuMetrics.activeUsage
         let memorySnapshot = getMemorySnapshot()
@@ -1431,6 +1434,7 @@ class StatsManager: ObservableObject {
     
     @MainActor
     private func refreshProcessStatsIfNeeded(force: Bool = false) {
+        guard isMonitoring, Defaults[.enableStatsFeature] else { return }
         let now = Date()
         guard force || now.timeIntervalSince(lastProcessStatsUpdate) >= processStatsUpdateInterval else { return }
         guard !isProcessRefreshInFlight else { return }
@@ -1441,6 +1445,7 @@ class StatsManager: ObservableObject {
             guard let self else { return }
             let processes = StatsManager.collectTopProcesses(limit: self.maxProcessEntries)
             await MainActor.run {
+                guard self.isMonitoring, Defaults[.enableStatsFeature] else { return }
                 self.cachedProcessStats = processes
                 self.lastProcessStatsUpdate = Date()
                 self.isProcessRefreshInFlight = false

@@ -207,11 +207,12 @@ class BluetoothAudioManager: ObservableObject {
     
     /// Starts polling for device connection changes (fallback mechanism)
     private func startPollingForChanges() {
-        print("🎧 [BluetoothAudioManager] Starting polling timer (3s interval)...")
+        print("🎧 [BluetoothAudioManager] Starting fallback polling timer (15s interval)...")
         
-        pollingTimer = Timer.scheduledTimer(withTimeInterval: 3.0, repeats: true) { [weak self] _ in
+        pollingTimer = Timer.scheduledTimer(withTimeInterval: 15.0, repeats: true) { [weak self] _ in
             self?.checkForDeviceChanges()
         }
+        pollingTimer?.tolerance = 3.0
     }
     
     /// Checks for device connection/disconnection changes

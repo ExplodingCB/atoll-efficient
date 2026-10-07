@@ -751,10 +751,13 @@ struct ContentView: View {
                     clearMusicControlVisibilityDeadline()
                 }
                 enqueueMusicControlWindowSync(forceRefresh: true)
-                startHiddenEdgeHoverPolling()
+                syncHiddenEdgeHoverPolling()
                 // Deterministic teardown for borderless panels (`.onDisappear` is
                 // unreliable); the window-cleanup path calls this before closing.
                 vm.onViewTeardown = { performViewTeardown() }
+            }
+            .onChange(of: shouldUseHiddenEdgeHoverPolling) { _, _ in
+                syncHiddenEdgeHoverPolling()
             }
             .onChange(of: terminalStickyMode) { _, _ in
                 syncStickyTerminalOutsideClickMonitor()
@@ -1949,22 +1952,24 @@ struct ContentView: View {
         isHoveringClosedMusicWaveformControl = false
     }
 
-    private func startHiddenEdgeHoverPolling() {
+    private func syncHiddenEdgeHoverPolling() {
+        guard shouldUseHiddenEdgeHoverPolling else {
+            stopHiddenEdgeHoverPolling()
+            return
+        }
         guard hiddenEdgeHoverPollingTask == nil else { return }
-
         hiddenEdgeHoverPollingTask = Task { @MainActor in
             while !Task.isCancelled {
-                if self.shouldUseHiddenEdgeHoverPolling {
-                    let hovering = self.hiddenHoverActivationContainsMouse()
-                    if hovering != self.isHovering {
-                        self.handleHover(hovering)
-                    }
+                let hovering = self.hiddenHoverActivationContainsMouse()
+                if hovering != self.isHovering {
+                    self.handleHover(hovering)
                 }
-
-                try? await Task.sleep(for: .milliseconds(50))
+                do {
+                    try await Task.sleep(for: .milliseconds(100))
+                } catch {
+                    return
+                }
             }
-
-            self.hiddenEdgeHoverPollingTask = nil
         }
     }
 

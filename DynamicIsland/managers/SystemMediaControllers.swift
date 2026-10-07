@@ -479,7 +479,7 @@ final class SystemBrightnessController {
     private var pendingAdjustTarget: Float?
     private let coreBrightnessClient = CoreBrightnessDisplayClient.shared
     private var pollTimer: Timer?
-    private let pollInterval: TimeInterval = 0.15
+    private let pollInterval: TimeInterval = 1.0
     private let pollChangeThreshold: Float = 0.005
 
     // MARK: - User-initiated brightness gate

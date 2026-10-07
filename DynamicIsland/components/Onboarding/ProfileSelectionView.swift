@@ -201,6 +201,13 @@ struct ProfileCard: View {
 // MARK: - Profile Settings Configuration
 
 func applyProfileSettings(_ profiles: Set<String>) {
+    // Profiles may choose an appearance, but this build keeps optional
+    // background collectors off until the user enables them in Settings.
+    defer {
+        if EfficientBuild.isEnabled {
+            EfficientBuild.applyLowPowerDefaults()
+        }
+    }
     // Clipboard is ALWAYS enabled (per user request)
     Defaults[.enableClipboardManager] = true
     
