@@ -57,12 +57,12 @@ final class MemoryUsageMonitor {
     }
 
     private func evaluateMemoryFootprint() async {
-        guard let usage = currentResidentSize() else { return }
+        guard let usage = currentFootprint() else { return }
         if usage >= thresholdBytes {
             restartIfNeeded(currentUsage: usage)
         } else if Date().timeIntervalSince(lastLogSample) >= logSampleInterval {
             lastLogSample = Date()
-            Logger.log("[MemoryMonitor] Resident usage: \(formatMegabytes(usage)) MB", category: .memory)
+            Logger.log("[MemoryMonitor] Footprint: \(formatMegabytes(usage)) MB", category: .memory)
         }
     }
 
@@ -110,19 +110,22 @@ final class MemoryUsageMonitor {
         }
     }
 
-    private func currentResidentSize() -> UInt64? {
-        var info = mach_task_basic_info()
-        var count = mach_msg_type_number_t(MemoryLayout<mach_task_basic_info>.size) / 4
+    /// Uses phys_footprint, the figure Activity Monitor shows. resident_size also
+    /// counts clean pages shared with the dyld cache, which can exceed 1 GB on its
+    /// own and made this prompt fire while the app owned ~100 MB.
+    private func currentFootprint() -> UInt64? {
+        var info = task_vm_info_data_t()
+        var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<integer_t>.size)
         let result = withUnsafeMutablePointer(to: &info) {
             $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
-                task_info(mach_task_self_, task_flavor_t(MACH_TASK_BASIC_INFO), $0, &count)
+                task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count)
             }
         }
         guard result == KERN_SUCCESS else {
             Logger.log("[MemoryMonitor] task_info failed with code \(result)", category: .error)
             return nil
         }
-        return UInt64(info.resident_size)
+        return UInt64(info.phys_footprint)
     }
 
     private func formatMegabytes(_ bytes: UInt64) -> String {

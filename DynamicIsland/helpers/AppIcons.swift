@@ -60,12 +60,19 @@ func AppIcon(for bundleID: String) -> Image {
 }
 
 
-func AppIconAsNSImage(for bundleID: String) -> NSImage? {
+/// Returns a single-representation icon. The workspace icon carries ~32 sizes
+/// (16-2048 px); anything that serialises it, such as the lock screen artwork
+/// fingerprint, would otherwise allocate hundreds of MB per track change.
+func AppIconAsNSImage(for bundleID: String, pixelSize: CGFloat = 512) -> NSImage? {
     let workspace = NSWorkspace.shared
     
     if let appURL = workspace.urlForApplication(withBundleIdentifier: bundleID) {
         let appIcon = workspace.icon(forFile: appURL.path)
-        return appIcon
+        var rect = NSRect(x: 0, y: 0, width: pixelSize, height: pixelSize)
+        guard let cgImage = appIcon.cgImage(forProposedRect: &rect, context: nil, hints: nil) else {
+            return appIcon
+        }
+        return NSImage(cgImage: cgImage, size: rect.size)
     }
     return nil
 }
