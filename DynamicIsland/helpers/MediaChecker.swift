@@ -61,6 +61,7 @@ final class MediaChecker: Sendable {
 
         do {
             try process.run()
+            ChildProcessRegistry.register(process)
         } catch {
             throw MediaCheckerError.processExecutionFailed
         }

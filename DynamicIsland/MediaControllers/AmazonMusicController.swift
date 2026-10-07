@@ -183,6 +183,7 @@ class FilteredNowPlayingController: ObservableObject, MediaControllerProtocol {
 
         do {
             try process.run()
+            ChildProcessRegistry.register(process)
             streamTask = Task { [weak self] in
                 await self?.processJSONStream()
             }

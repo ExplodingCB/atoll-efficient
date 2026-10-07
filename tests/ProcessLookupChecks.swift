@@ -14,9 +14,12 @@ import Darwin
         try! helper.run()
         let childPID = helper.processIdentifier
         precondition(LocalProcessLookup.pids(named: "sleep").contains(childPID))
+        precondition(LocalProcessLookup.parentPID(childPID) == pid)
+        precondition(LocalProcessLookup.arguments(childPID) == ["/bin/sleep", "10"])
+        precondition(LocalProcessLookup.parentPID(-1) == nil)
         helper.terminate()
         helper.waitUntilExit()
         precondition(!LocalProcessLookup.pids(named: "sleep").contains(childPID))
-        print("PASS: self, unknown name, invalid PID, live child, exited child")
+        print("PASS: self, unknown name, invalid PID, live child, parent PID, argv, exited child")
     }
 }
