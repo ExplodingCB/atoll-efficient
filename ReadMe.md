@@ -2,11 +2,11 @@
 > **This is Atoll Efficient, an unofficial fork** of [Ebullioscopic/Atoll](https://github.com/Ebullioscopic/Atoll) v2.3.3, maintained by [ExplodingCB](https://github.com/ExplodingCB). It is not affiliated with or endorsed by the Atoll project. Please send bugs in this build here, not upstream.
 >
 > What's different:
-> - **Memory.** Lock screen artwork no longer serialises multi-size app icons to TIFF, which spiked to ~700 MB when a browser played media without artwork ([upstream #866](https://github.com/Ebullioscopic/Atoll/issues/866)). The restart prompt now measures `phys_footprint` instead of resident size, which counted memory shared with macOS ([upstream #869](https://github.com/Ebullioscopic/Atoll/issues/869)).
+> - **Memory.** Lock screen artwork no longer serialises multi-size app icons to TIFF, which spiked to ~700 MB when a browser played media without artwork ([upstream #866](https://github.com/Ebullioscopic/Atoll/issues/866)). The restart prompt now measures `phys_footprint` instead of resident size, which counted memory shared with macOS ([upstream #869](https://github.com/Ebullioscopic/Atoll/issues/869)). Quitting or restarting no longer leaves the ~17 MB `mediaremote-adapter.pl` helper running.
 > - **Power.** OSDUIHelper lookup happens in-process instead of launching `pgrep`/`killall` every 150 ms, idle timers back off, and Stats, clipboard, downloads, terminal, screen assistant, LLM usage, and real-time waveform start off (each can be turned back on in Settings). On the Mac it was built on, this took `sysmond` from ~15-18% of a core to 0%.
 > - **Separate app.** It installs as `Atoll Efficient.app` (`com.chaseculbertson.AtollEfficient`), so it can't collide with upstream Atoll. Sparkle auto-update is off; update through Homebrew.
 >
-> Install: `brew install --cask explodingcb/tap/atoll-efficient` (Apple silicon, macOS 14.6 or later). The app is ad-hoc signed, not notarized.
+> Install: `brew install --cask explodingcb/tap/atoll-efficient` (Apple silicon, macOS 14.6 or later). The app is ad-hoc signed, not notarized, so macOS asks for Bluetooth and Accessibility again after each update.
 
 <p align="center">
   <img src=".github/assets/atoll-logo.png" alt="Atoll logo" width="120">
